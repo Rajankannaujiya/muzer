@@ -10,9 +10,11 @@ function Appbar() {
        <div className='m-2 p-2 text-white'>
        muzicer
        </div>
+
        <div>
         {session.data?.user && <Button onClick={()=>signOut()} className='m-2 p-2'>Logout</Button>}
         {!session.data?.user && <Button onClick={()=>signIn()} className='m-2 p-2 '>Login</Button>}
+
        </div>
     </div>
   )

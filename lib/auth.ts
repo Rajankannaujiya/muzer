@@ -57,10 +57,10 @@
         },
 
     
-        async signIn(params:any) {
+        async signIn(params: any) {
           console.log("params signin:", params);
         
-          if (!params.user.email) {
+          if (!params.user?.email) {
             console.log("Email is required for sign-in.");
             return false;
           }
@@ -78,9 +78,7 @@
           try {
             // Check if the user already exists by email
             const existingUser = await prisma.user.findFirst({
-              where: {
-                email: params?.user?.email,
-              },
+              where: { email: params.user.email },
             });
         
             if (existingUser) {
@@ -91,15 +89,13 @@
             // Create a new user
             await prisma.user.create({
               data: {
-                id: params.user.id,
-                email: params?.user?.email,
-                provider: provider,
+                email: params.user.email,
+                provider,
               },
             });
         
             console.log("New user created successfully.");
-          } catch (error:any) {
-            
+          } catch (error: any) {
             if (error.code === 'P2002') {
               console.log("Unique constraint failed: Email already exists.");
             } else {
@@ -110,6 +106,7 @@
         
           return true; // Sign-in successful
         }
+        
         
       },
   }

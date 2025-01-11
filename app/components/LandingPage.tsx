@@ -1,10 +1,13 @@
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+
 import { UsersIcon, PlayCircleIcon, HeartIcon } from "lucide-react"
 import Link from "next/link"
-import Appbar from "./Appbar"
+import Appbar from "./Appbar";
+import NavigateButton from "./navigation";
+import SignupButton from "./SignUpButton";
 
 export default function LandingPage() {
+
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-900 text-gray-100">
       <Appbar />
@@ -20,11 +23,9 @@ export default function LandingPage() {
                   FanTune revolutionizes music streaming by putting the playlist in your fans&apos; hands. Create deeper connections and unforgettable live sessions.
                 </p>
               </div>
-              <div className="space-x-4">
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Start Streaming</Button>
-                <Button variant="outline" className="text-gray-500 border-gray-100 hover:bg-gray-100 hover:text-gray-900">
-                  Learn More
-                </Button>
+              <div className="space-x-4 flex">
+                <NavigateButton route="/dashbord" buttonTitle="start streaming"/>
+                <SignupButton />
               </div>
             </div>
           </div>
@@ -85,11 +86,8 @@ export default function LandingPage() {
                 </p>
               </div>
               <div className="w-full max-w-sm space-y-2">
-                <form className="flex space-x-2">
-                  <Input className="max-w-lg flex-1 bg-gray-800 text-gray-100 border-gray-700" placeholder="Enter your email" type="email" />
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90" type="submit">
-                    Sign Up
-                  </Button>
+                <form className="flex space-x-2 justify-center">
+                  <SignupButton />
                 </form>
                 <p className="text-xs text-gray-400">
                   By signing up, you agree to our{" "}
