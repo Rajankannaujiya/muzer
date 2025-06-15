@@ -9,7 +9,13 @@ import { NEXT_AUTH_CONFIG } from "@/lib/auth";
 
 export default async function LandingPage() {
 
-  const {user} =await getServerSession(NEXT_AUTH_CONFIG);
+  const session =await getServerSession(NEXT_AUTH_CONFIG);
+
+  const userId = session?.user?.id;
+
+  if(!userId){
+    console.log("no userId found");
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-900 text-gray-100">
@@ -27,7 +33,7 @@ export default async function LandingPage() {
                 </p>
               </div>
               <div className="space-x-4 flex">
-                <NavigateButton route={`/dashbord/${user?.id}`} buttonTitle="start streaming"/>
+                <NavigateButton route={`/dashbord/${userId}`} buttonTitle="start streaming"/>
                 <SignupButton />
               </div>
             </div>
