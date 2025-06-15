@@ -16,48 +16,40 @@ const CreateStreameSchema = z.object({
     url: z.string().url()
 })
 
+
+function extractYouTubeId(url: string): string | null {
+  const match = url.match(
+    YT_REGEX
+  );
+  return match ? match[1] : null;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const dataDetail = CreateStreameSchema.parse(await req.json());
 
-    // Validate YouTube URL
-    const isYt = dataDetail.url.match(YT_REGEX);
-    if (!isYt || !isYt[1]) {
-      return NextResponse.json({ message: "Wrong url format" }, { status: 411 });
+    const extractedId = extractYouTubeId(dataDetail.url);
+    if (!extractedId) {
+      return NextResponse.json({ message: "Invalid YouTube URL" }, { status: 411 });
     }
-
-    const extractedId = dataDetail.url.split("?v=")[1];
 
     const response = await youtubesearchapi.GetVideoDetails(extractedId);
 
-    // ✅ Defensive checks for thumbnails
-    if (
-      !response ||
-      typeof response !== "object" ||
-      !response.thumbnail ||
-      !Array.isArray(response.thumbnail.thumbnails)
-    ) {
-      console.error("Invalid YouTube response:", response);
-      return NextResponse.json(
-        { message: "Failed to fetch YouTube thumbnails. Please check the video URL." },
-        { status: 502 }
-      );
+    let thumbnails = response?.thumbnail?.thumbnails;
+    const defaultThumb = "https://images.pexels.com/photos/1000602/pexels-photo-1000602.jpeg?auto=compress&cs=tinysrgb&w=300";
+
+    if (!Array.isArray(thumbnails) || thumbnails.length === 0) {
+      thumbnails = [{ url: defaultThumb, width: 300 }];
     }
 
-    const thumbnails = response.thumbnail.thumbnails;
+    // Sort thumbnails by width
+    thumbnails.sort((a: { width: number }, b: { width: number }) => a.width - b.width);
 
-    // Sort thumbnails by width (ascending)
-    thumbnails.sort((a: { width: number }, b: { width: number }) =>
-      a.width < b.width ? -1 : 1
-    );
-
-    // Check if user exists
     const userExists = await prisma.user.findUnique({
       where: { id: dataDetail.creatorId },
     });
 
     if (!userExists) {
-      console.warn("Invalid creatorId:", dataDetail.creatorId);
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
@@ -65,17 +57,14 @@ export async function POST(req: NextRequest) {
       data: {
         userId: dataDetail.creatorId,
         url: dataDetail.url,
-        extractedId,
+        extractedId: extractedId || "unknown",
         type: "Youtube",
-        title: response.title ?? "Cannot find video",
+        title: response?.title ?? "Untitled Video",
         smallImg:
           thumbnails.length > 1
             ? thumbnails[thumbnails.length - 2].url
-            : thumbnails[0].url ??
-              "https://images.pexels.com/photos/1000602/pexels-photo-1000602.jpeg?auto=compress&cs=tinysrgb&w=300",
-        bigImg:
-          thumbnails[thumbnails.length - 1].url ??
-          "https://images.pexels.com/photos/1000602/pexels-photo-1000602.jpeg?auto=compress&cs=tinysrgb&w=300",
+            : thumbnails[0].url ?? defaultThumb,
+        bigImg: thumbnails[thumbnails.length - 1].url ?? defaultThumb,
       },
     });
 
@@ -88,7 +77,7 @@ export async function POST(req: NextRequest) {
     console.error("API Error in /api/streams:", error.message || error);
     return NextResponse.json(
       { message: "Error while adding a stream" },
-      { status: 411 }
+      { status: 500 }
     );
   }
 }
