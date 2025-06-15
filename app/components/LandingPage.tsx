@@ -4,9 +4,12 @@ import Link from "next/link"
 import Appbar from "./Appbar";
 import NavigateButton from "./navigation";
 import SignupButton from "./SignUpButton";
+import { getServerSession } from "next-auth";
+import { NEXT_AUTH_CONFIG } from "@/lib/auth";
 
-export default function LandingPage() {
+export default async function LandingPage() {
 
+  const {user} =await getServerSession(NEXT_AUTH_CONFIG);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-900 text-gray-100">
@@ -24,7 +27,7 @@ export default function LandingPage() {
                 </p>
               </div>
               <div className="space-x-4 flex">
-                <NavigateButton route="/dashbord" buttonTitle="start streaming"/>
+                <NavigateButton route={`/dashbord/${user?.id}`} buttonTitle="start streaming"/>
                 <SignupButton />
               </div>
             </div>
