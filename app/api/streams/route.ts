@@ -17,76 +17,81 @@ const CreateStreameSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
+  try {
+    const dataDetail = CreateStreameSchema.parse(await req.json());
 
-
-    try {
-        const dataDetail = CreateStreameSchema.parse(await req.json());
-
-        const isYt = dataDetail.url.match(YT_REGEX);
-
-
-        if (!isYt || !isYt[1]) {
-            return NextResponse.json({
-                message: "Wrong url format"
-            }, {
-                status: 411
-            })
-        }
-
-
-        const extractedId = dataDetail.url.split("?v=")[1];
-
-
-        const response = await youtubesearchapi.
-            GetVideoDetails(extractedId);
-
-        console.log("response", response)
-
-        const thumbnails = response.thumbnail.thumbnails;
-        thumbnails ? thumbnails.sort((a: { width: number }, b: { width: number }) => a.width < b.width ? -1 : 1) : "";
-        console.log(thumbnails);
-        console.log("==================================")
-        console.log("thumbnail", thumbnails)
-
-
-        const userExists = await prisma.user.findUnique({
-            where: { id: dataDetail.creatorId},
-        });
-
-        if (!userExists) {
-            console.log("invalid creatorId", dataDetail.creatorId)
-            return NextResponse.json({ message: "user not found" })
-        }
-        const stream = await prisma.stream.create({
-            data: {
-                userId: dataDetail.creatorId,
-                url: dataDetail.url,
-                extractedId: extractedId,
-                type: "Youtube",
-                title: response.title ?? "Cannot find video",
-                smallImg: (thumbnails.length > 1 ? thumbnails[thumbnails.length - 2].url : thumbnails[thumbnails.length - 1].url) ?? "https://images.pexels.com/photos/1000602/pexels-photo-1000602.jpeg?auto=compress&cs=tinysrgb&w=300",
-                bigImg: thumbnails[thumbnails.length - 1].url ?? "https://images.pexels.com/photos/1000602/pexels-photo-1000602.jpeg?auto=compress&cs=tinysrgb&w=300",
-
-            }
-        })
-
-        console.log("after stream", stream)
-
-        return NextResponse.json({
-            ...stream,
-            haveUpvoted: false,
-            upvotes: 0
-        })
-    } catch (error: any) {
-        console.log("error", error.message);
-        return NextResponse.json({
-            message: "Error while adding a stream"
-        }, {
-            status: 411
-        })
+    // Validate YouTube URL
+    const isYt = dataDetail.url.match(YT_REGEX);
+    if (!isYt || !isYt[1]) {
+      return NextResponse.json({ message: "Wrong url format" }, { status: 411 });
     }
-}
 
+    const extractedId = dataDetail.url.split("?v=")[1];
+
+    const response = await youtubesearchapi.GetVideoDetails(extractedId);
+
+    // ✅ Defensive checks for thumbnails
+    if (
+      !response ||
+      typeof response !== "object" ||
+      !response.thumbnail ||
+      !Array.isArray(response.thumbnail.thumbnails)
+    ) {
+      console.error("Invalid YouTube response:", response);
+      return NextResponse.json(
+        { message: "Failed to fetch YouTube thumbnails. Please check the video URL." },
+        { status: 502 }
+      );
+    }
+
+    const thumbnails = response.thumbnail.thumbnails;
+
+    // Sort thumbnails by width (ascending)
+    thumbnails.sort((a: { width: number }, b: { width: number }) =>
+      a.width < b.width ? -1 : 1
+    );
+
+    // Check if user exists
+    const userExists = await prisma.user.findUnique({
+      where: { id: dataDetail.creatorId },
+    });
+
+    if (!userExists) {
+      console.warn("Invalid creatorId:", dataDetail.creatorId);
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+
+    const stream = await prisma.stream.create({
+      data: {
+        userId: dataDetail.creatorId,
+        url: dataDetail.url,
+        extractedId,
+        type: "Youtube",
+        title: response.title ?? "Cannot find video",
+        smallImg:
+          thumbnails.length > 1
+            ? thumbnails[thumbnails.length - 2].url
+            : thumbnails[0].url ??
+              "https://images.pexels.com/photos/1000602/pexels-photo-1000602.jpeg?auto=compress&cs=tinysrgb&w=300",
+        bigImg:
+          thumbnails[thumbnails.length - 1].url ??
+          "https://images.pexels.com/photos/1000602/pexels-photo-1000602.jpeg?auto=compress&cs=tinysrgb&w=300",
+      },
+    });
+
+    return NextResponse.json({
+      ...stream,
+      haveUpvoted: false,
+      upvotes: 0,
+    });
+  } catch (error: any) {
+    console.error("API Error in /api/streams:", error.message || error);
+    return NextResponse.json(
+      { message: "Error while adding a stream" },
+      { status: 411 }
+    );
+  }
+}
 
 export async function GET(req: NextRequest) {
 
