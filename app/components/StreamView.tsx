@@ -44,7 +44,6 @@ export default function StreamView({
   const [pathName, setPathName] = useState(false);
 
 const path = usePathname();
-console.log(path);
 
 
   useEffect(() => {
@@ -65,7 +64,6 @@ useEffect(() => {
     return;
   }
 
-  console.log("videoRef",videoPlayerRef)
   const player = YouTubePlayer(videoPlayerRef.current!);
 
   // 'loadVideoById' is queued until the player is ready to receive API calls.
@@ -76,8 +74,6 @@ useEffect(() => {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function eventHandler(event: any) {
-    console.log(event);
-    console.log(event.data);
     if (event.data === 0) {
       playNextVideo();
     }
@@ -90,8 +86,6 @@ useEffect(() => {
 
 
 
-  // console.log("this is the current song",currentlyPlaying, currentlyPlaying?.extractedId);
-
   useEffect(() => {
     const fetchSongs = async () => {
       try {
@@ -99,7 +93,6 @@ useEffect(() => {
           method: "GET",
         });
         const data = await res.json();
-        console.log("the songs are", data);
     
         setSongs(data.streams.sort((a: { upvotes: number; }, b: { upvotes: number; }) => b.upvotes - a.upvotes));
         const newPlaying =
@@ -135,7 +128,6 @@ useEffect(() => {
         method:'GET',
       })
       
-      console.log("this is the data",await data.json())
       const json  = await data.json();
       setCurrentlyPlaying(json.streams);
       setSongs(s=>s.filter(x=>x.id !==json.streams?.id));
@@ -228,7 +220,6 @@ useEffect(() => {
       });
   };
 
-  console.log("currently playing", currentlyPlaying, "video ref" ,videoPlayerRef)
 
   const extractYoutubeId = (url: string) => {
     const regExp =
@@ -350,7 +341,7 @@ useEffect(() => {
               <ul className="space-y-4">
                 {songs.length > 0 &&
                   songs.map((song) => (
-                    <li
+                    <div
                       key={song.id}
                       className="flex items-center justify-between bg-gray-700 p-3 rounded-lg"
                     >
@@ -378,7 +369,7 @@ useEffect(() => {
                           )}
                         </Button>
                       </div>
-                    </li>
+                    </div>
                   ))}
               </ul>
             </CardContent>
