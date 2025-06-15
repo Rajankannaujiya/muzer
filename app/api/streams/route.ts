@@ -40,7 +40,12 @@ export async function POST(req: NextRequest) {
         const response = await youtubesearchapi.
             GetVideoDetails(extractedId);
 
-        console.log("response", response)
+        console.log("response", response);
+        if (!response || !response.thumbnail || !Array.isArray(response.thumbnail.thumbnails)) {
+            return NextResponse.json({
+                message: "Video metadata missing or malformed"
+            }, { status: 500 });
+        }
 
         const thumbnails = response.thumbnail.thumbnails;
         thumbnails ? thumbnails.sort((a: { width: number }, b: { width: number }) => a.width < b.width ? -1 : 1) : "";
