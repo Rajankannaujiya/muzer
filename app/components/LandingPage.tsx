@@ -13,6 +13,10 @@ export default async function LandingPage() {
 
   const userId = session?.user?.id;
 
+  if(!userId){
+    console.log("no userId found");
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-900 text-gray-100">
       <Appbar />
