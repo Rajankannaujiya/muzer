@@ -204,7 +204,7 @@ useEffect(() => {
   
 
   const handleShare = () => {
-    const shareUrl = `${window.location.hostname}/creator/${creatorId}`;
+    const shareUrl = `${window.location.hostname}/dashbord/${creatorId}`;
     console.log("sharable link", shareUrl);
 
     navigator.clipboard

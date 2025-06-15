@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
         console.log("response", response)
 
         const thumbnails = response.thumbnail.thumbnails;
-        thumbnails.sort((a: { width: number }, b: { width: number }) => a.width < b.width ? -1 : 1)
+        thumbnails ? thumbnails.sort((a: { width: number }, b: { width: number }) => a.width < b.width ? -1 : 1) : "";
         console.log(thumbnails);
         console.log("==================================")
         console.log("thumbnail", thumbnails)
